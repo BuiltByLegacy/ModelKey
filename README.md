@@ -24,9 +24,33 @@ Once that connection is reliable, ModelKey can support higher-level applications
 - Assist with MBD and PMI workflows
 - Perform controlled generative CAD actions
 
-## Product principle
+## Product principles
 
-**Claude reasons; ModelKey constrains and verifies.**
+### Augmentation, not automation
+
+ModelKey exists to make engineers faster, better informed, and more consistent — **not to replace engineering judgment**.
+
+Claude should:
+- Find and correlate relevant model information
+- Explain why something may matter
+- Prioritize findings and likely root causes
+- Surface inconsistencies across geometry, PMI, requirements, characteristics, and downstream intent
+- Propose options and remediation plans
+- Help an engineer understand consequences before making a change
+
+NX and other deterministic/native tools should:
+- Perform geometry and model operations
+- Execute native validation where those capabilities already exist
+- Provide authoritative structured model state and checker results
+
+The engineer should:
+- Make the engineering decision
+- Approve model-changing actions
+- Resolve ambiguous intent, GD&T, requirements, and release decisions
+
+ModelKey may execute approved actions, but it must never silently substitute AI judgment for engineering authority.
+
+### Claude reasons; ModelKey constrains and verifies
 
 Claude should never need arbitrary OS control, UI automation, or unrestricted code execution to modify NX. Model-changing actions must use typed ModelKey operations executed through NX Open. Writes are approved, logged, and verified after NX updates.
 
@@ -131,5 +155,6 @@ ModelKey is intended to support restricted engineering environments. Review and 
 - #14 — Developer setup
 - #16 — Initial rule catalog
 - #17 — Scoring and release readiness
+- #22 — Alpha Test: Claude ↔ NX Open closed-loop proof
 
 See `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and `docs/ALPHA_TEST.md`.
