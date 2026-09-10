@@ -1,23 +1,63 @@
 # ModelKey
 
-**AI-assisted engineering review and automation for Siemens NX.**
+**Connect Claude to Siemens NX through a controlled NX Open bridge.**
 
-ModelKey adds a controlled intelligence layer on top of Siemens NX using NX Open. The first product focus is model review: inspect a live NX part, run deterministic engineering best-practice rules, explain findings, and allow an engineer to approve safe fixes.
+ModelKey gives Claude structured, auditable access to the Siemens NX model currently open on an engineer's workstation. Claude can inspect real model state, reason about it, propose constrained actions, execute approved changes through NX Open, and verify the result.
+
+## Core product thesis
+
+ModelKey is **not** intended to replace native NX capabilities such as Check-Mate, Sketch Checker, PMI Advisor, DFM Advisor, or NX Inspector.
+
+The core product is the connection layer:
+
+```text
+Claude ↔ ModelKey Bridge ↔ ModelKey NX Adapter ↔ NX Open ↔ Siemens NX
+```
+
+Once that connection is reliable, ModelKey can support higher-level applications such as:
+
+- Ask Claude questions about the active NX model
+- Read features, sketches, expressions, dependencies, PMI, and validation results
+- Explain modeling problems and likely root causes
+- Modify approved parameters and features
+- Orchestrate native NX review/validation tools
+- Assist with MBD and PMI workflows
+- Perform controlled generative CAD actions
 
 ## Product principle
 
-**The AI is not the compliance checker.**
+**Claude reasons; ModelKey constrains and verifies.**
 
-Deterministic rules create findings from NX model data. The AI explains those findings, helps prioritize them, and proposes actions. Model-changing actions are constrained, auditable, explicitly approved, and revalidated after execution.
+Claude should never need arbitrary OS control, UI automation, or unrestricted code execution to modify NX. Model-changing actions must use typed ModelKey operations executed through NX Open. Writes are approved, logged, and verified after NX updates.
+
+## First alpha
+
+The first ModelKey alpha is deliberately small:
+
+1. Open a disposable NX part with a named expression such as `LENGTH = 100 mm`.
+2. Claude calls ModelKey and identifies the active part.
+3. Claude retrieves structured features/expressions/sketch state.
+4. The user asks: `What is in the model I currently have open?`
+5. The user asks: `Change LENGTH to 125 mm.`
+6. Claude proposes a typed `set_expression(...)` action.
+7. After approval, ModelKey executes the change through NX Open.
+8. NX regenerates.
+9. ModelKey reads the expression again and verifies `LENGTH = 125 mm`.
+10. Claude confirms completion only after verification.
+
+Passing this test proves the fundamental product architecture: **Claude can read, act on, and verify a live Siemens NX model through ModelKey.**
+
+See `docs/ALPHA_TEST.md` for the complete alpha procedure and pass/fail criteria.
 
 ## Product progression
 
-1. **ModelKey Review** — model health, sketches, expressions, feature dependencies, standards checks
-2. **ModelKey Fix** — engineer-approved NX Open remediations
-3. **ModelKey MBD** — PMI, datum, GD&T, manufacturing-definition readiness and standards assistance
-4. **ModelKey Build** — controlled generative CAD through typed ModelKey actions
+1. **ModelKey Connect** — Claude ↔ NX read/reason/act/verify bridge
+2. **ModelKey Review** — consume NX model state and native validation results; correlate and explain findings
+3. **ModelKey Fix** — engineer-approved NX Open remediations
+4. **ModelKey MBD** — PMI/GD&T/MBD copilot built on NX capabilities and ModelKey reasoning
+5. **ModelKey Build** — controlled generative CAD through typed ModelKey actions
 
-## Initial architecture
+## Architecture direction
 
 ```text
 Siemens NX
@@ -26,93 +66,63 @@ Siemens NX
 NX Open Adapter
    |
    v
-Normalized Model Graph
-   |----------------------|
-   v                      v
-Deterministic Rule Engine  AI Reasoning Layer
-   |                      |
-   v                      v
-Findings + Evidence ---> Explanation / Proposed Actions
-                               |
-                               v
-                         Engineer Approval
-                               |
-                               v
-                          NX Open Safe Fix
-                               |
-                               v
-                            Revalidate
+Normalized Model State / Model Graph
+   |
+   +---------------------> ModelKey Read Tools
+   |
+   +---------------------> Native NX Validation Adapters
+   |
+   v
+ModelKey Bridge
+   |
+   v
+Claude
+   |
+   v
+Proposed Typed Action
+   |
+   v
+Engineer Approval
+   |
+   v
+NX Open Write Operation
+   |
+   v
+NX Update / Regenerate
+   |
+   v
+Verification back to Claude
 ```
 
-## MVP
+## Native NX capability strategy
 
-The first sellable capability is **AI Model Review for Siemens NX**.
+ModelKey should reuse existing NX capabilities where they already solve the deterministic problem. We should ingest and reason over native results rather than recreate them unnecessarily.
 
-The MVP should be able to:
+Likely native integrations include:
 
-- Attach to an active NX session
-- Inspect the active part through NX Open
-- Build a normalized model graph
-- Detect underconstrained sketches
-- Find hard-coded / unnamed controlling dimensions that should be expressions
-- Detect duplicated controlling values and selected feature-tree/dependency issues
-- Run customer-configurable standards rules
-- Produce a model health score and actionable finding list
-- Let the user ask questions about findings
-- Execute a small set of safe fixes only after approval
-- Re-run rules after model changes
-- Perform an initial MBD-readiness review
+- Check-Mate
+- Sketch Checker / sketch state
+- PMI Advisor
+- MBD logical rules
+- DFM Advisor
+- NX Inspector / model-based characteristics
 
-## Example experience
-
-> Review this model against our modeling and MBD standards.
-
-ModelKey may report:
-
-```text
-MODEL HEALTH: 74/100
-
-HIGH
-- Sketch 7: underconstrained, 2 unresolved degrees of freedom
-- Hole pattern uses six independent hole features instead of a pattern
-- Datum B referenced by PMI but datum definition is incomplete
-
-MEDIUM
-- 14 unnamed dimensional expressions
-- WALL_THICKNESS is represented by three independent values
-- Extrude 22 depends on fragile downstream geometry
-
-MBD
-- 3 manufacturing features lack expected product definition
-- 2 PMI objects are not associated with valid model geometry
-```
-
-Then the engineer can ask:
-
-> Why is Sketch 7 unstable?
-
-or:
-
-> Convert the repeated wall-thickness dimensions into one named expression.
-
-ModelKey proposes the action, the engineer approves it, NX Open performs the change, and ModelKey revalidates the model.
+ModelKey's differentiation is the conversational engineering layer, cross-feature/root-cause reasoning, orchestration, safe actions, company-knowledge context, and closed-loop verification.
 
 ## Enterprise direction
 
-ModelKey is intended to support restricted engineering environments. Review rules should remain usable without cloud AI. AI connectivity, outbound model context, redaction, tool permissions, approval policy, and audit logging must be configurable.
-
-ModelKey should never require arbitrary OS control to modify NX. NX changes should occur through constrained NX Open operations.
+ModelKey is intended to support restricted engineering environments. Review and local interrogation should remain useful without cloud AI where possible. AI connectivity, outbound model context, redaction, tool permissions, approval policy, and audit logging must be configurable.
 
 ## Current backlog
 
 - #1 — Epic: ModelKey MVP — AI Model Review for Siemens NX
 - #2 — NX Open connector
 - #3 — Normalized model graph
-- #4 — Deterministic rule engine
+- #4 — Deterministic rule engine / native validation strategy
 - #5 — Review experience
 - #6 — Claude bridge
 - #7 — Safe Fix engine
-- #8 — MBD readiness checker
+- #8 — MBD readiness / copilot foundation
 - #9 — Enterprise standards packs
 - #10 — Enterprise security and audit model
 - #11 — Generative CAD action protocol
@@ -122,4 +132,4 @@ ModelKey should never require arbitrary OS control to modify NX. NX changes shou
 - #16 — Initial rule catalog
 - #17 — Scoring and release readiness
 
-See `docs/ARCHITECTURE.md` and `docs/ROADMAP.md` for the implementation direction.
+See `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, and `docs/ALPHA_TEST.md`.
