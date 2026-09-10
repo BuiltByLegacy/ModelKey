@@ -2,69 +2,83 @@
 
 ## Product sequence
 
-ModelKey should progress in four major product layers:
+ModelKey starts by proving the **Claude ↔ NX connection**, then builds higher-level products on top of that foundation:
 
-1. **Review** — understand and score existing NX models
-2. **Fix** — execute safe engineer-approved remediations
-3. **MBD** — evaluate and assist model-based definition readiness
-4. **Build** — create and modify geometry through constrained AI actions
+1. **Connect** — Claude reads, reasons about, acts on, and verifies a live NX model through NX Open
+2. **Review** — consume NX model state and native validation results; correlate and explain findings
+3. **Fix** — execute safe engineer-approved remediations
+4. **MBD** — assist PMI/GD&T/MBD workflows using NX capabilities plus ModelKey reasoning
+5. **Build** — create and modify geometry through constrained AI actions
 
-The sequence is intentional. Review provides the model understanding, evidence, standards engine, safety model, and trust needed before more autonomous write capabilities are introduced.
+The immediate priority is not to recreate native NX checkers. The alpha must first prove that Claude can safely interact with the active NX model through a constrained ModelKey tool layer.
 
 ## Phase 0 — Foundation
 
-Primary issues: #14, #15
+Primary issues: #14, #2, #6
 
 Goals:
 - Establish Python project structure
 - Document NX Open development workflow
-- Add mock NX adapter
-- Create logging/configuration/test harness
-- Lock product architecture and safety principles
+- Build the local ModelKey bridge
+- Connect Claude to explicit ModelKey tools
+- Add logging/configuration/test harness
 
 Exit criteria:
-- Core package runs without NX
-- Mock fixtures can exercise model graph and rule-engine tests
-- NX-specific runtime setup is documented
+- ModelKey can attach to an active NX session
+- Claude can invoke a read-only ModelKey tool
+- Tool calls are logged and constrained
 
-## Phase 1 — ModelKey Review alpha
+## Phase 1 — Claude ↔ NX alpha
 
-Primary issues: #2, #3, #4, #12, #16, #17
+Reference: `docs/ALPHA_TEST.md`
 
 Goals:
-- Connect to active NX session
-- Extract a normalized model graph
-- Establish first deterministic rule catalog
-- Detect underconstrained sketches
-- Detect expression/modeling anti-patterns
-- Detect selected feature dependency / model-quality problems
+- `get_active_part()` returns the live NX part
+- `get_features()`, `get_expressions()`, and `get_sketches()` return structured model state
+- Claude can answer: `What is in the model I currently have open?`
+- Claude can propose `set_expression(name, value, unit)`
+- Engineer approval is required before write execution
+- NX Open changes one named expression in a disposable test part
+- NX regenerates successfully
+- ModelKey rereads the expression and verifies the result back to Claude
+
+Exit criteria:
+- End-to-end **read → reason → act → verify** loop succeeds
+- No screenshots, mouse/keyboard automation, arbitrary shell, or arbitrary Python execution are required
+- User does not need to manually copy generated code into NX for every command
+
+This is the first major product proof point.
+
+## Phase 2 — Rich model interrogation
+
+Primary issue: #3
+
+Goals:
+- Normalize features, sketches, expressions, dependencies, datums, bodies, PMI, and errors
+- Preserve traceability back to NX objects
+- Make model context compact enough for AI use
+- Add dependency/root-cause graph support
+
+Exit criteria:
+- Claude can answer useful engineering questions about how a model is constructed and what depends on what
+
+## Phase 3 — Native NX validation orchestration + Review
+
+Primary issues: #4, #5, #12, #16, #17
+
+Goals:
+- Reuse native NX validation where available instead of duplicating it
+- Ingest/normalize relevant outputs from Check-Mate, sketch state, PMI/MBD tools, and other available validation APIs
+- Add only ModelKey-specific deterministic rules where NX has a real gap
+- Correlate multiple findings to likely root causes
+- Produce model health/release-readiness views
 - Create known-good and intentionally flawed validation parts
-- Produce deterministic model health and release-readiness results
 
 Exit criteria:
-- Open an NX part and run review successfully
-- Expected findings match test-corpus ground truth
-- Same input produces same results
-- Findings trace back to NX objects
+- ModelKey explains and prioritizes real NX/model findings with evidence
+- Multiple downstream findings can be correlated to a shared model dependency/root cause
 
-## Phase 2 — Review UX + AI explanation
-
-Primary issues: #5, #6
-
-Goals:
-- ModelKey review panel/workflow
-- Findings grouped by severity/category
-- Navigate/highlight affected NX objects
-- Ask questions about findings
-- Claude explains deterministic evidence and proposes remediation
-- Record AI interactions and tool proposals for traceability
-
-Exit criteria:
-- Engineer can complete a useful model review without leaving the workflow
-- AI explanation is grounded in actual model/rule evidence
-- AI cannot silently modify NX
-
-## Phase 3 — ModelKey Fix
+## Phase 4 — ModelKey Fix
 
 Primary issue: #7
 
@@ -73,52 +87,46 @@ Goals:
 - Expression cleanup
 - Selected naming-standard fixes
 - Safe shared-expression conversions
-- Simple unambiguous sketch corrections
+- Other typed NX Open remediations
 
 Exit criteria:
 - At least three remediation classes work end-to-end
-- Every fix is approved, logged, and revalidated
-- Failed writes produce a clear recovery state
+- Every fix is approved, logged, and verified
 
-## Phase 4 — Enterprise standards
+## Phase 5 — Enterprise standards and security
 
 Primary issues: #9, #10
 
 Goals:
 - Versioned customer standards packs
-- Customer rule enablement/severity/threshold configuration
-- Data minimization and redaction
-- Local/offline deterministic review mode
+- Company knowledge/context support
+- Data minimization/redaction
+- Local/offline deterministic operation where possible
 - Tool allowlists and audit records
 - Restricted-network deployment definition
 
 Exit criteria:
-- A pilot customer can load a controlled company standards pack
-- Review remains useful without cloud AI
-- Model-changing actions and outbound AI context are governed and auditable
+- A pilot customer can govern what data leaves the workstation and what actions Claude is allowed to invoke
 
-## Phase 5 — ModelKey MBD
+## Phase 6 — ModelKey MBD
 
 Primary issue: #8
 
 Goals:
-- PMI inventory and association review
-- Datum and datum-reference checks
-- Missing-definition detection
-- Duplicate/conflicting PMI detection
-- Customer MBD standards hooks
-- AI explanations and proposed MBD remediation
+- Build an MBD copilot around existing NX PMI/MBD capabilities rather than recreate them
+- Inspect PMI inventory/association, datums, feature definition, and native validation results
+- Explain incomplete or conflicting product definition
+- Propose approved MBD remediation
 
 Future expansion:
-- Feature recognition for product-definition expectations
 - GD&T assistance
 - Automated PMI authoring under explicit approval
-- Downstream manufacturing/inspection readiness
+- Manufacturing/inspection readiness orchestration
 
 Exit criteria:
-- ModelKey can produce a deterministic MBD-readiness report with evidence linked to NX objects
+- Claude can discuss the actual NX product definition and guide an engineer through an evidence-based MBD release workflow
 
-## Phase 6 — ModelKey Build
+## Phase 7 — ModelKey Build
 
 Primary issue: #11
 
@@ -126,7 +134,7 @@ Goals:
 - Typed ModelKey CAD Action Protocol
 - Plan/preview/approval flow
 - Core modeling operations through NX Open
-- Post-action update and review
+- Post-action update and verification
 
 Initial action set:
 - new/open/save part
@@ -142,24 +150,23 @@ Initial action set:
 Exit criteria:
 - Natural-language request can be translated into a constrained action plan
 - Approved plan modifies NX through NX Open
-- Result is revalidated by ModelKey Review
+- Result is verified before Claude reports success
 
 ## Commercial path
 
 Primary issue: #13
 
 Initial packaging hypothesis:
-- **ModelKey Review** — core product
-- **ModelKey Fix** — automation tier
+- **ModelKey Connect** — Claude ↔ NX bridge and model interrogation
+- **ModelKey Review** — native validation orchestration and engineering reasoning
+- **ModelKey Fix** — automation/remediation tier
 - **ModelKey MBD** — premium MBD/PMI module
 - **ModelKey Build** — advanced AI CAD authoring module
 
-A first customer pilot should focus on measurable outcomes such as review-time reduction, standards adherence, defect/finding detection, model cleanup time, and reduction in release/rework loops.
-
 ## Immediate implementation order
 
-Recommended first engineering sequence:
+The priority sequence is now:
 
-**#14 → #2 → #3 → #16/#4 → #12 → #17 → #5 → #6 → #7**
+**#14 → #2 → #6 → Alpha closed-loop test → #3 → Review/validation work**
 
-MBD (#8) can begin once #3 and #4 provide enough model/PMI structure to support reliable checks.
+Do not invest heavily in review-rule duplication until the Claude ↔ NX alpha passes.
