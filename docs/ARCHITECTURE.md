@@ -4,6 +4,19 @@
 
 ModelKey connects Siemens NX to a deterministic engineering review engine and an optional AI reasoning layer. NX Open is the authoritative integration surface for reading and changing NX models.
 
+## Core philosophy: augmentation, not automation
+
+ModelKey is an engineering augmentation system. It should improve an engineer's awareness, reasoning speed, traceability, and consistency without replacing engineering authority.
+
+The system therefore separates responsibilities deliberately:
+
+- **Claude / AI reasoning**: find, correlate, explain, prioritize, compare, and propose.
+- **NX and deterministic tools**: provide authoritative model state, perform native validation, and execute geometry/model operations.
+- **ModelKey**: constrain tool access, normalize context, preserve provenance, enforce approval gates, log actions, and verify outcomes.
+- **Engineer**: make judgment calls, resolve ambiguity, approve model changes, and retain release authority.
+
+AI-generated recommendations must be presented as recommendations unless backed by an explicit deterministic rule or native authoritative result. Ambiguous GD&T, design intent, requirement interpretation, and release decisions remain human decisions.
+
 ## Core components
 
 ### 1. NX Open adapter
@@ -43,6 +56,8 @@ Evaluates the model graph using explicit versioned rules. Rules produce findings
 
 Examples include underconstrained sketches, unnamed controlling expressions, duplicated controls, fragile dependencies, failed features, datum requirements, and MBD completeness checks.
 
+The rule engine should not duplicate native NX capability without a clear product reason. Prefer adapters that ingest authoritative NX checker results where available, and reserve ModelKey rules for higher-order consistency checks, cross-domain reasoning, customer-specific logic, or gaps not covered natively.
+
 ### 4. Standards packs
 Customer-specific, versioned configuration defines modeling and MBD expectations without modifying core engine code. Rule execution and review reports record the exact standards-pack version used.
 
@@ -50,10 +65,12 @@ Customer-specific, versioned configuration defines modeling and MBD expectations
 Optional. Receives only approved normalized model context and deterministic findings. Responsibilities:
 - Explain findings
 - Answer questions about model structure and rules
+- Correlate related findings and probable root causes
+- Compare model state against engineering context
 - Prioritize remediation
 - Propose constrained ModelKey actions
 
-The AI must not invent pass/fail compliance results independently of the rule engine.
+The AI must not invent pass/fail compliance results independently of the rule engine or authoritative native validation.
 
 ### 6. Safe Fix engine
 Executes typed, allowlisted write operations only after engineer approval. Each fix follows:
@@ -67,6 +84,8 @@ Executes typed, allowlisted write operations only after engineer approval. Each 
 8. Re-run applicable rules
 9. Report result and audit record
 
+The goal is not autonomous model repair. The goal is to reduce repetitive execution effort after the engineer has made or approved the engineering decision.
+
 ### 7. Review UX
 Initial UX should support:
 - Run Review
@@ -74,6 +93,7 @@ Initial UX should support:
 - Findings by severity and category
 - Navigate/highlight affected NX objects
 - Explain finding
+- Show supporting native/checker evidence
 - Preview/approve fix
 - Compare before/after review state
 - Export report
@@ -84,16 +104,16 @@ Initial UX should support:
 NX Session
   -> NX Open Adapter
   -> Normalized Model Graph
-  -> Deterministic Rule Engine
+  -> Native Validation / Deterministic Rules
   -> Findings + Evidence
       -> Review UI
       -> Optional AI Reasoning
-           -> Proposed typed action
-           -> Engineer approval
+           -> Explanation / Correlation / Proposed typed action
+           -> Engineer decision / approval
            -> Safe Fix Engine
            -> NX Open Adapter
            -> NX
-           -> Revalidation
+           -> Revalidation / verification
 ```
 
 ## Security principles
@@ -106,6 +126,7 @@ NX Session
 - Secrets must stay outside source control.
 - Every write action must be attributable and auditable.
 - Restricted-network/offline deployments should retain deterministic review capability.
+- Human approval remains the default gate for model-changing actions.
 
 ## Initial implementation direction
 
